@@ -4,7 +4,8 @@ thanks for cflores' great work on the original haproxyctl
 i am working towards to complete this when i have time, so we will have compiled binary in the future.
 
 ###update
-i completed binding function
+1. completed binding to port function
+2. work with multiple process module
 
 #current status
 although most of original haproxyctl function are usable, 
@@ -15,7 +16,6 @@ the programing is still under actively developing. what you see is not completed
 1. need to finish flag and usage setting
 2. more functions will be added
 3. seprate the library and command execution
-4. update control over multiple processes
 ```
 
 ###compile haproxyctl.go

@@ -8,18 +8,14 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"net/http"
 )
 
 var (
 	configcheck  = flag.Bool("configcheck", false, "check config file")
-	showhealth   = flag.Bool("showhealth", false, "switch for health check")
-	showbackends = flag.Bool("showbackends", false, "switch for backend info")
-	status       = flag.Bool("status", false, "switch for current running status")
-	enable       = flag.String("enable", "", "enable px/sv / put px/sv into ACTIV mode")
-	enableall    = flag.String("enableall", "", "re-enable a server on multiple backends")
-	disable      = flag.String("disable", "", "disable px/sv / put px/sv into MAINT mode")
-	disableall   = flag.String("disableall", "", "disenable a server on multiple backends")
-	socketexec   = flag.String("socketexec", "", "execution socket commands")
+	action	     = flag.String("action", "", "tell me what action you wanna do?")
+	execution    = flag.String("execution", "", "parameters to action")
+	binding      = flag.String("binding", "", "http port you want program to bind to")
 	f            = flag.String("f", "/etc/haproxy/haproxy.cfg", "point configration file, default /etc/haproxy/haproxy.cfg")
 )
 
@@ -53,26 +49,26 @@ func (h *haProxy) Loadenv(cfg string) {
 	}
 	//Load binary path to haProxy struct
 	rewh := regexp.MustCompile(`no haproxy in`)
-	
+
 	shell := fmt.Sprintf("which haproxy")
 	cmd := exec.Command("sh", "-c", shell)
 	res, _ := cmd.CombinedOutput()
 	if rewh.MatchString(string(res)) {
-		fmt.Println("your haproxy binary is not in the $PATH")	
+		fmt.Println("your haproxy binary is not in the $PATH")
 	} else {
 		h.Bin = strings.Trim(string(res), "\n")
 	}
 }
 
-func (h *haProxy) Showstatus() {
+func (h *haProxy) Showstatus() string {
 	if len(h.Pid) > 0 {
-		fmt.Printf("haproxy is running on pid %s.\nthese ports are used and guys are connected:\n", h.Pid)
+		head := fmt.Sprintf("haproxy is running on pid %s.\nthese ports are used and guys are connected:\n", h.Pid)
 		shell := fmt.Sprintf("lsof -ln -i |awk '$2 ~ /%s/ {print $8\" \"$9}'", h.Pid)
 		cmd := exec.Command("sh", "-c", shell)
 		res, _ := cmd.CombinedOutput()
-		fmt.Println(string(res))
+		return head + string(res)
 	} else {
-		fmt.Printf("haproxy is not running\n")
+		return "haproxy is not running"
 	}
 }
 
@@ -96,37 +92,38 @@ func (h *haProxy) Exec(command string) string {
 	return string(res)
 }
 
-func (h *haProxy) Showhealth() {
+func (h *haProxy) Showhealth() string {
 	output := h.Exec("show stat")
 	out := strings.Split(output, "\n")
-	fmt.Printf("\nnow printing Health Check...\n\n")
+	res := fmt.Sprintf("\nnow printing Health Check...\n\n")
 	for _, line := range out {
 		if line != "" {
 			data := strings.Split(line, ",")
-			fmt.Printf("%-10s %-10s %-10s %-10s\n", data[0], data[1], data[17], data[18])
+			res += fmt.Sprintf("%-10s %-10s %-10s %-10s\n", data[0], data[1], data[17], data[18])
 		}
 	}
+	return res
 }
 
-func (h *haProxy) ShowRegexp(reg string) {
+func (h *haProxy) ShowRegexp(reg string) string {
 	re := regexp.MustCompile(reg)
 
 	output := h.Exec("show stat")
 	out := strings.Split(output, "\n")
-	fmt.Printf("\nnow printing %s Health Check\n", reg)
+	res := fmt.Sprintf("\nnow printing %s Health Check\n", reg)
 	for i, line := range out {
 		if i == 0 || re.MatchString(line) {
 			data := strings.Split(line, ",")
-			fmt.Printf("%-10s %-10s %-10s %-10s\n", data[0], data[1], data[17], data[18])
+			res += fmt.Sprintf("%-10s %-10s %-10s %-10s\n", data[0], data[1], data[17], data[18])
 		}
 	}
+	return res
 }
 
-func (h *haProxy) DisableServer(px string, sv string) {
+func (h *haProxy) DisableServer(px string, sv string) string {
 	c := fmt.Sprintf("disable server %s/%s", px, sv)
 	h.Exec(c)
-	fmt.Printf("Server %s/%s has been disabled\n", px, sv)
-	h.ShowRegexp(sv)
+	return fmt.Sprintf("Server %s/%s has been disabled\n", px, sv) + h.ShowRegexp(sv)
 }
 
 func (h *haProxy) DisableAll(server string) {
@@ -145,28 +142,27 @@ func (h *haProxy) DisableAll(server string) {
 	}
 }
 
-func (h *haProxy) EnableServer(px string, sv string) {
+func (h *haProxy) EnableServer(px string, sv string) string {
 	c := fmt.Sprintf("enable server %s/%s", px, sv)
 	h.Exec(c)
-	fmt.Printf("Server %s/%s has been enabled\n", px, sv)
-	h.ShowRegexp(sv)
+	return fmt.Sprintf("Server %s/%s has been enabled\n", px, sv) + h.ShowRegexp(sv)
 }
 
 func (h *haProxy) EnableAll(server string) {
-        re := regexp.MustCompile(server)
+	re := regexp.MustCompile(server)
 	rest := regexp.MustCompile(`(?i)Down|MAINT`)
 
-        output := h.Exec("show stat")
-        out := strings.Split(output, "\n")
-        for i, line := range out {
-                if i != 0 && line != "" {
-                        data := strings.Split(line, ",")
-                        if re.MatchString(data[1]) && rest.MatchString(data[17]) {
-                                c := fmt.Sprintf("enable server %s/%s", data[0], server)
-                                h.Exec(c)
-                        }
-                }
-        }
+	output := h.Exec("show stat")
+	out := strings.Split(output, "\n")
+	for i, line := range out {
+		if i != 0 && line != "" {
+			data := strings.Split(line, ",")
+			if re.MatchString(data[1]) && rest.MatchString(data[17]) {
+				c := fmt.Sprintf("enable server %s/%s", data[0], server)
+				h.Exec(c)
+			}
+		}
+	}
 }
 
 func (h *haProxy) Configcheck() {
@@ -176,9 +172,47 @@ func (h *haProxy) Configcheck() {
 	fmt.Println(strings.Trim(string(res), "\n"))
 }
 
-//func (h *haProxy) Binding() {
-//
-//}
+//Binding Handler Section
+func handler(w http.ResponseWriter, r *http.Request, h *haProxy) {
+	usage := "please use /haproxyctl?action=xxxx&exec=yyyy"
+	if r.URL.Path != "/haproxyctl" {
+		fmt.Fprintf(w, usage)
+	} else {
+		err := r.ParseForm()
+		if err != nil { panic(err) }
+		uri := r.Form
+		if uri.Get("action") == "" {
+			fmt.Fprintf(w, "you need to specify action")
+		} else {
+			action := uri.Get("action")
+			exec := uri.Get("exec")
+			switch action {
+			case "showstatus":
+				fmt.Fprintf(w, h.Showstatus())
+			case "socketexec":
+				res := h.Exec(exec)
+                                fmt.Fprintf(w, res)
+			case "showhealth":
+				res := h.Showhealth()
+				fmt.Fprintf(w, res)
+			case "enable":
+				en := strings.Split(exec, "/")	
+				res := h.EnableServer(en[0], en[1])
+				fmt.Fprintf(w, res)
+			case "enableall":
+				h.EnableAll(exec)
+			case "disableall":
+				h.DisableAll(exec)
+			case "disable":
+				dis := strings.Split(exec, "/")
+				res := h.DisableServer(dis[0], dis[1])
+				fmt.Fprintf(w, res)
+			default:
+				fmt.Fprintf(w, usage)
+			}
+		}
+	}
+}
 
 func main() {
 	flag.Parse()
@@ -189,41 +223,48 @@ func main() {
 		haproxy.Loadenv("/etc/haproxy/haproxy.cfg")
 	}
 
-	if len(*socketexec) > 0 {
-		res := haproxy.Exec(*socketexec)
-		fmt.Println(res)
+	if len(*binding) > 0 {
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			handler(w, r, haproxy)
+		})
+		http.ListenAndServe(":" + *binding, nil)
 	}
 
 	if *configcheck {
 		haproxy.Configcheck()
 	}
 
-	if *disableall != "" {
-		haproxy.DisableAll(*disableall)
+	if len(*action) > 0 {
+		switch *action {
+		case "socketexec":
+                	res := haproxy.Exec(*execution)
+                	fmt.Print(res)
+		case "showstatus":
+                	res := haproxy.Showstatus()
+                	fmt.Print(res)
+		case "showbackend":
+			res := haproxy.ShowRegexp("BACKEND")
+                	fmt.Print(res)
+		case "showhealth":
+                	res := haproxy.Showhealth()
+                	fmt.Print(res)
+		case "showregexp":
+			res := haproxy.ShowRegexp(*execution)
+			fmt.Print(res)
+		case "enable":
+                	en := strings.Split(*execution, "/")
+                	res := haproxy.EnableServer(en[0], en[1])
+                	fmt.Printf(res)
+		case "enableall":
+			haproxy.EnableAll(*execution)
+		case "disable":
+                	dis := strings.Split(*execution, "/")
+                	res := haproxy.DisableServer(dis[0], dis[1])
+                	fmt.Printf(res)
+		case "disableall":
+			haproxy.DisableAll(*execution)
+		default:
+			flag.PrintDefaults()
+		}
 	}
-	
-	if *enableall != "" {
-		haproxy.EnableAll(*enableall)
-	}
-
-	if *status {
-		haproxy.Showstatus()
-	}
-
-	if *showbackends {
-		haproxy.ShowRegexp("BACKEND")
-	}
-
-	if *showhealth {
-		haproxy.Showhealth()
-	}
-	if *enable != "" {
-		en := strings.Split(*enable, "/")
-		haproxy.EnableServer(en[0], en[1])
-	}
-	if *disable != "" {
-		dis := strings.Split(*disable, "/")
-		haproxy.DisableServer(dis[0], dis[1])
-	}
-	// flag.PrintDefaults()
 }

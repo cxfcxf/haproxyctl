@@ -3,11 +3,8 @@
 thanks for cflores' great work on the original haproxyctl
 i am working towards to complete this when i have time, so we will have compiled binary in the future.
 
-#reason for writing this
-```
-i am not a expert of haproxy, but i find its actually annonying to gather data or enable/disable servers
-through stat socket haproxy provides. so this is a tool or wrapper to get around with that. 
-```
+###update
+i completed binding function
 
 #current status
 although most of original haproxyctl function are usable, 
@@ -18,12 +15,7 @@ the programing is still under actively developing. what you see is not completed
 1. need to finish flag and usage setting
 2. more functions will be added
 3. seprate the library and command execution
-4. binding fucntion, binding it to a port for remote access and execution
-```
-
-```
-i am not a expert of haproxy, but i find its actually annonying to gather data or enable/disable servers
-through stat socket haproxy provides. so this is a tool or wrapper to get around with that. 
+4. update control over multiple processes
 ```
 
 ###compile haproxyctl.go
@@ -36,25 +28,25 @@ you can either point the haproxy.cfg file with -f or program will detect it by d
 
 show running status, 
 ```
-[root@haproxy haproxyctl]# go run haproxyctl.go -status
-haproxy is running on pid 4554.
+[root@haproxy haproxyctl]# go run haproxyctl.go -action="showstatus"
+haproxy is running on pid 1662.
 these ports are used and guys are connected:
 TCP *:commplex-main
-UDP *:56381
+UDP *:41747
 ```
-disable app/app1
+disable app/app2
 ```
-[root@haproxy haproxyctl]# go run haproxyctl.go -disable app/app1
-Server app/app1 has been disabled
+[root@haproxy haproxyctl]# go run haproxyctl.go -action="disable" -execution="app/app2"
+Server app/app2 has been disabled
 
-now printing app1 Health Check
+now printing app2 Health Check
 # pxname   svname     status     weight
-app        app1       DOWN       1
+app        app2       DOWN       1
 ```
 
 showhealth
 ```
-[root@haproxy haproxyctl]# go run haproxyctl.go -showhealth
+[root@haproxy haproxyctl]# go run haproxyctl.go -action="showhealth"
 
 now printing Health Check...
 
@@ -70,7 +62,7 @@ app        BACKEND    DOWN       0
 ```
 show backend
 ```
-[root@haproxy haproxyctl]# go run haproxyctl.go -showbackend
+[root@haproxy haproxyctl]# go run haproxyctl.go -action="showbackend"
 
 now printing BACKEND Health Check
 # pxname   svname     status     weight
@@ -80,14 +72,14 @@ app        BACKEND    DOWN       0
 
 disable/enable a server in all backend
 ```
-go run haproxyctl.go -disableall="app1"
-
-go run haproxyctl.go -enableall="app1"
+go run haproxyctl.go -action="disableall" -execution="app2"
+go run haproxyctl.go -action="enableall" -execution="app1"
 ```
 
 exectution socket command (directly execution socket command)
 ```
-go run haproxyctl.go -socketexec="get weight app/app1"
+[root@haproxy haproxyctl]# go run haproxyctl.go -action="socketexec" -execution="get weight app/app2"
+1 (initial 1)
 ```
 
 

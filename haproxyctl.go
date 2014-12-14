@@ -176,6 +176,10 @@ func (h *haProxy) Configcheck() {
 	fmt.Println(strings.Trim(string(res), "\n"))
 }
 
+//func (h *haProxy) Binding() {
+//
+//}
+
 func main() {
 	flag.Parse()
 	haproxy := new(haProxy)

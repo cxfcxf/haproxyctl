@@ -3,9 +3,17 @@
 thanks for cflores' great work on the original haproxyctl
 i am working towards to complete this when i have time, so we will have compiled binary in the future.
 
+#reason for writing this
+```
+i am not a expert of haproxy, but i find its actually annonying to gather data or enable/disable servers
+through stat socket haproxy provides. so this is a tool or wrapper to get around with that. 
+```
+
 #current status
 although most of original haproxyctl function are usable, 
 the programing is still under actively developing. what you see is not completed yet.
+
+#future plan
 ```
 1. need to finish flag and usage setting
 2. more functions will be added

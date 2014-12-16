@@ -215,30 +215,36 @@ func handler(w http.ResponseWriter, r *http.Request, h *haProxy) {
 			fmt.Fprintf(w, "you need to specify action")
 		} else {
 			action := uri.Get("action")
-			exec := uri.Get("exec")
+			execution := uri.Get("execution")
 			switch action {
 			case "showstatus":
 				fmt.Fprintf(w, h.Showstatus())
 			case "socketexec":
-				res := h.Exec(exec)
+				res := h.Exec(execution)
 				for _, r := range res {
                                 	fmt.Fprintf(w, r)
 				}
 			case "showhealth":
 				res := h.Showhealth()
 				fmt.Fprintf(w, res)
+			case "showbackend":
+				res := h.ShowRegexp("BACKEND")
+				fmt.Fprintf(w, res)
+			case "showregexp":
+				res := h.ShowRegexp(execution)
+				fmt.Fprintf(w, res)
 			case "enable":
-				en := strings.Split(exec, "/")	
+				en := strings.Split(execution, "/")	
 				res := h.EnableServer(en[0], en[1])
 				fmt.Fprintf(w, res)
 			case "enableall":
-				h.EnableAll(exec)
-			case "disableall":
-				h.DisableAll(exec)
+				h.EnableAll(execution)
 			case "disable":
-				dis := strings.Split(exec, "/")
+				dis := strings.Split(execution, "/")
 				res := h.DisableServer(dis[0], dis[1])
 				fmt.Fprintf(w, res)
+			case "disableall":
+				h.DisableAll(execution)
 			default:
 				fmt.Fprintf(w, usage)
 			}

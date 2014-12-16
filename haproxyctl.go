@@ -16,7 +16,7 @@ var (
 	f            = flag.String("f", "/etc/haproxy/haproxy.cfg", "point configration file, default /etc/haproxy/haproxy.cfg")
 )
 
-func handler(w http.ResponseWriter, r *http.Request, h *haProxy) {
+func handler(w http.ResponseWriter, r *http.Request, h *HaProxy) {
 	usage := "please use /haproxyctl?action=xxxx&exec=yyyy"
 	if r.URL.Path != "/haproxyctl" {
 		fmt.Fprintf(w, usage)
@@ -67,7 +67,8 @@ func handler(w http.ResponseWriter, r *http.Request, h *haProxy) {
 
 func main() {
 	flag.Parse()
-	haproxy := new(haproxyctl.haProxy)
+	haproxy := new(haproxyctl.HaProxy)
+
 	if len(*f) > 0 {
 		haproxy.Loadenv(*f)
 	} else {

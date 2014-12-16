@@ -13,7 +13,7 @@ const (
 	SOCKET_TYPE = "unix"
 )
 
-type haProxy struct {
+type HaProxy struct {
 	Pid  []string
 	Sock []string
 	Bin  string
@@ -29,9 +29,9 @@ func appendifuniq(slice []string, s string) []string {
     return append(slice, s)
 }
 
-func (h *haProxy) Loadenv(cfg string) {
+func (h *HaProxy) Loadenv(cfg string) {
 	h.Cfg = cfg
-	//Load sock and pid to haProxy struct
+	//Load sock and pid to HaProxy struct
 	repf := regexp.MustCompile(`pidfile`)
 	reso := regexp.MustCompile(`stats\ socket`)
 
@@ -49,7 +49,7 @@ func (h *haProxy) Loadenv(cfg string) {
 			h.Sock = appendifuniq(h.Sock, strings.Fields(line)[2])
 		}
 	}
-	//Load binary path to haProxy struct
+	//Load binary path to HaProxy struct
 	rewh := regexp.MustCompile(`no haproxy in`)
 
 	shell := fmt.Sprintf("which haproxy")
@@ -62,7 +62,7 @@ func (h *haProxy) Loadenv(cfg string) {
 	}
 }
 
-func (h *haProxy) Showstatus() string {
+func (h *HaProxy) Showstatus() string {
 	if len(h.Pid) > 0 {
 	var status string
 		for _, p := range h.Pid {
@@ -78,7 +78,7 @@ func (h *haProxy) Showstatus() string {
 	}
 }
 
-func (h *haProxy) Exec(command string) []string {
+func (h *HaProxy) Exec(command string) []string {
 	var result []string
 	for _, socket := range h.Sock {
         	sock, err := net.Dial(SOCKET_TYPE, socket)
@@ -102,7 +102,7 @@ func (h *haProxy) Exec(command string) []string {
 	return result
 }
 
-func (h *haProxy) Showhealth() string {
+func (h *HaProxy) Showhealth() string {
 	s := h.Exec("show stat")
 	var result string
 	for _, output := range s {
@@ -119,7 +119,7 @@ func (h *haProxy) Showhealth() string {
 	return result
 }
 
-func (h *haProxy) ShowRegexp(reg string) string {
+func (h *HaProxy) ShowRegexp(reg string) string {
 	re := regexp.MustCompile(reg)
 
 	s := h.Exec("show stat")
@@ -138,13 +138,13 @@ func (h *haProxy) ShowRegexp(reg string) string {
 	return result
 }
 
-func (h *haProxy) DisableServer(px string, sv string) string {
+func (h *HaProxy) DisableServer(px string, sv string) string {
 	c := fmt.Sprintf("disable server %s/%s", px, sv)
 	h.Exec(c)
 	return fmt.Sprintf("Server %s/%s has been disabled\n", px, sv) + h.ShowRegexp(sv)
 }
 
-func (h *haProxy) DisableAll(server string) {
+func (h *HaProxy) DisableAll(server string) {
 	re := regexp.MustCompile(server)
 
 	s := h.Exec("show stat")
@@ -161,13 +161,13 @@ func (h *haProxy) DisableAll(server string) {
 	}
 }
 
-func (h *haProxy) EnableServer(px string, sv string) string {
+func (h *HaProxy) EnableServer(px string, sv string) string {
 	c := fmt.Sprintf("enable server %s/%s", px, sv)
 	h.Exec(c)
 	return fmt.Sprintf("Server %s/%s has been enabled\n", px, sv) + h.ShowRegexp(sv)
 }
 
-func (h *haProxy) EnableAll(server string) {
+func (h *HaProxy) EnableAll(server string) {
 	re := regexp.MustCompile(server)
 	rest := regexp.MustCompile(`(?i)Down|MAINT`)
 
@@ -185,7 +185,7 @@ func (h *haProxy) EnableAll(server string) {
 	}
 }
 
-func (h *haProxy) Configcheck() {
+func (h *HaProxy) Configcheck() {
 	shell := fmt.Sprintf("%s -c -f %s", h.Bin, h.Cfg)
 	cmd := exec.Command("sh", "-c", shell)
 	res, _ := cmd.CombinedOutput()

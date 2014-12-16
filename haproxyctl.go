@@ -17,7 +17,7 @@ var (
 )
 
 func handler(w http.ResponseWriter, r *http.Request, h *haproxyctl.HaProxy) {
-	usage := "please use /haproxyctl?action=xxxx&exec=yyyy"
+	usage := "please use /haproxyctl?action=xxxx&execution=yyyy"
 	if r.URL.Path != "/haproxyctl" {
 		fmt.Fprintf(w, usage)
 	} else {

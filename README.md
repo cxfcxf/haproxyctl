@@ -1,51 +1,61 @@
 #Haproxyctl in golang
 #####This is a partial rewrite of https://github.com/flores/haproxyctl in go
-thanks for cflores' great work on the original haproxyctl
+Thanks for cflores' great work on the original haproxyctl
+i added more functions to the haproxyctl
 
-###update
-1. completed binding to port function
-2. work with multiple process module
+####Library is under github.com/cxfcxf/haproxyctl/lib
 
-#current status
-although most of original haproxyctl function are usable, 
-the programing is still under actively developing. what you see is not completed yet.
+####Things need to be improved
+1. it is not robust enough, i need people to test it in different situation, so i can improve it by problem people run into
+2. ARGV prob need to match the original one or not, i am not sure
+3. ..........
 
-#future plan
+####feature
+support of multiple cores
+support binding haproxyctl to a port
+
+###how to compile haproxyctl.go
 ```
-1. need to finish flag and usage setting
-2. more functions will be added
-3. seprate the library and command execution
-```
-
-###compile haproxyctl.go
-```
+go get github.com/cxfcxf/haproxyctl/lib
+git clone https://github.com/cxfcxf/haproxyctl.git
+cd haproxyctl
 go build haproxyctl
 ```
 
-###example
-you can either point the haproxy.cfg file with -f or program will detect it by default
+###example for running as a command
+you can either point the haproxy.cfg file with -f or 
+program will detect it at /etc/haproxy/haproxy.cfg  by default
 
-show running status, 
+####show running status
 ```
-[root@haproxy haproxyctl]# go run haproxyctl.go -action="showstatus"
-haproxy is running on pid 1662.
+[root@haproxy haproxyctl]# ./haproxyctl -action="showstatus"
+haproxy is running on pid 1434.
 these ports are used and guys are connected:
 TCP *:commplex-main
-UDP *:41747
+UDP *:48266
+haproxy is running on pid 1435.
+these ports are used and guys are connected:
+TCP *:commplex-main
+UDP *:48266
 ```
-disable app/app2
+
+####disable server app/app2
 ```
-[root@haproxy haproxyctl]# go run haproxyctl.go -action="disable" -execution="app/app2"
+[root@haproxy haproxyctl]# ./haproxyctl -action="disable" -execution="app/app2"
 Server app/app2 has been disabled
 
 now printing app2 Health Check
 # pxname   svname     status     weight
-app        app2       DOWN       1
+app        app2       MAINT      1
+
+now printing app2 Health Check
+# pxname   svname     status     weight
+app        app2       MAINT      1
 ```
 
-showhealth
+####showhealth
 ```
-[root@haproxy haproxyctl]# go run haproxyctl.go -action="showhealth"
+[root@haproxy haproxyctl]# ./haproxyctl -action="showhealth"
 
 now printing Health Check...
 
@@ -54,14 +64,32 @@ main       FRONTEND   OPEN
 static     static     DOWN       1
 static     BACKEND    DOWN       0
 app        app1       DOWN       1
-app        app2       DOWN       1
+app        app2       MAINT      1
+app        app3       DOWN       1
+app        app4       DOWN       1
+app        BACKEND    DOWN       0
+
+now printing Health Check...
+
+# pxname   svname     status     weight
+main       FRONTEND   OPEN
+static     static     DOWN       1
+static     BACKEND    DOWN       0
+app        app1       DOWN       1
+app        app2       MAINT      1
 app        app3       DOWN       1
 app        app4       DOWN       1
 app        BACKEND    DOWN       0
 ```
-show backend
+
+####show backend
 ```
-[root@haproxy haproxyctl]# go run haproxyctl.go -action="showbackend"
+[root@haproxy haproxyctl]# ./haproxyctl -action="showbackend"
+
+now printing BACKEND Health Check
+# pxname   svname     status     weight
+static     BACKEND    DOWN       0
+app        BACKEND    DOWN       0
 
 now printing BACKEND Health Check
 # pxname   svname     status     weight
@@ -69,17 +97,35 @@ static     BACKEND    DOWN       0
 app        BACKEND    DOWN       0
 ```
 
-disable/enable a server in all backend
+####disable/enable a server in all backend
 ```
-go run haproxyctl.go -action="disableall" -execution="app2"
-go run haproxyctl.go -action="enableall" -execution="app1"
+./haproxyctl -action="disableall" -execution="app2"
+./haproxyctl -action="enableall" -execution="app1"
 ```
 
-exectution socket command (directly execution socket command)
+####exectution of any socket command (directly execution socket command)
 ```
-[root@haproxy haproxyctl]# go run haproxyctl.go -action="socketexec" -execution="get weight app/app2"
+[root@haproxy haproxyctl]# ./haproxyctl -action="socketexec" -execution="get weight app/app2"
+1 (initial 1)
+
 1 (initial 1)
 ```
+
+###Example for binding to web port for RESTful API
+```
+[root@haproxy haproxyctl]# ./haproxyctl --binding="8888"
+```
+now you can do something like
+```
+####showstatus
+curl http://youripaddress:8888/haproxyctl?action=showstatus
+####socketexec
+curl http://youripaddress:8888/haproxyctl?action=socketexec&execution=get%20weight%20app/app1
+####disable server app/app2
+curl http://youripaddress:8888/haproxyctl?action=disable&exectution=app/app2
+```
+web haproxyctl bascilly support all kind of command through your request
+so you can disable server remotely, it shares the same return asd command line
 
 
 #License

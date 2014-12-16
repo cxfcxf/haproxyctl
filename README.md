@@ -1,7 +1,6 @@
 #Haproxyctl in golang
 #####This is a partial rewrite of https://github.com/flores/haproxyctl in go
 thanks for cflores' great work on the original haproxyctl
-i am working towards to complete this when i have time, so we will have compiled binary in the future.
 
 ###update
 1. completed binding to port function

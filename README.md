@@ -1,6 +1,8 @@
 #Haproxyctl in golang
 #####This is a partial rewrite of https://github.com/flores/haproxyctl in go
 Thanks for cflores' great work on the original haproxyctl
+Thanks for cflores' advise of building on haproxyctl
+
 i added more functions to the haproxyctl
 
 ####Library is under github.com/cxfcxf/haproxyctl/lib
@@ -8,7 +10,7 @@ i added more functions to the haproxyctl
 ####Things need to be improved
 1. it is not robust enough, i need people to test it in different situation, so i can improve it by problem people run into
 2. ARGV prob need to match the original one or not, i am not sure
-3. ..........
+3. Need more user cases for haproxy to improve haproxyctl.
 
 ####feature
 support of multiple cores

@@ -16,7 +16,7 @@ var (
 	f            = flag.String("f", "/etc/haproxy/haproxy.cfg", "point configration file, default /etc/haproxy/haproxy.cfg")
 )
 
-func handler(w http.ResponseWriter, r *http.Request, h *HaProxy) {
+func handler(w http.ResponseWriter, r *http.Request, h *haproxyctl.HaProxy) {
 	usage := "please use /haproxyctl?action=xxxx&exec=yyyy"
 	if r.URL.Path != "/haproxyctl" {
 		fmt.Fprintf(w, usage)

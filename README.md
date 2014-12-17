@@ -1,7 +1,12 @@
 #Haproxyctl in golang
 #####This is a partial rewrite of https://github.com/flores/haproxyctl in go
-Thanks for cflores' great work on the original haproxyctl
-Thanks for cflores' advise of building on haproxyctl
+Thanks for cflores' great work and his advise on the original haproxyctl.
+i added more functions to the haproxyctl
+
+####update
+binding function has been updated, so instead of using basic http auth, the program now can take an additional argv called --client
+--client="ipaddress" which acts as an ip whitelist, but it can only take one ip.
+
 
 i added more functions to the haproxyctl
 
@@ -115,7 +120,7 @@ app        BACKEND    DOWN       0
 
 ###Example for binding to web port for RESTful API
 ```
-[root@haproxy haproxyctl]# ./haproxyctl --binding="8888"
+[root@haproxy haproxyctl]# ./haproxyctl --binding="0.0.0.0:8888" --client="172.16.177.1"
 ```
 now you can do something like
 ```

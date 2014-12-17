@@ -13,12 +13,15 @@ var (
 	action	     = flag.String("action", "", "tell me what action you wanna do?")
 	execution    = flag.String("execution", "", "parameters to action")
 	binding      = flag.String("binding", "", "http port you want program to bind to")
+	client	     = flag.String("client", "", "only one client ip are allowed")
 	f            = flag.String("f", "/etc/haproxy/haproxy.cfg", "point configration file, default /etc/haproxy/haproxy.cfg")
 )
 
-func handler(w http.ResponseWriter, r *http.Request, h *haproxyctl.HaProxy) {
+func handler(w http.ResponseWriter, r *http.Request, h *haproxyctl.HaProxy, c string) {
 	usage := "please use /haproxyctl?action=xxxx&execution=yyyy"
-	if r.URL.Path != "/haproxyctl" {
+	if strings.Split(r.RemoteAddr, ":")[0] != c {
+		fmt.Fprintf(w, "sorry, you are not in the whitelist in order to exec api")
+	} else if r.URL.Path != "/haproxyctl" {
 		fmt.Fprintf(w, usage)
 	} else {
 		err := r.ParseForm()
@@ -75,11 +78,11 @@ func main() {
 		haproxy.Loadenv("/etc/haproxy/haproxy.cfg")
 	}
 
-	if len(*binding) > 0 {
+	if len(*binding) > 0 && len(*client) > 0 {
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			handler(w, r, haproxy)
+			handler(w, r, haproxy, *client)
 		})
-		http.ListenAndServe(":" + *binding, nil)
+		http.ListenAndServe(*binding, nil)
 	}
 
 	if *configcheck {

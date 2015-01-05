@@ -46,7 +46,7 @@ func (h *HaProxy) Loadenv(cfg string) {
 		if repf.MatchString(line) {
 			p, err := ioutil.ReadFile(strings.Fields(line)[1])
 			if err != nil {
-				log.Fatal(err)
+				log.Fatal(err + "please make sure haproxy is started\n")
 			}
 			q := strings.Split(string(p), "\n")
 			for _, l := range q[0:len(q)-1] {

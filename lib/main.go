@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"log"
 )
 
 const (
@@ -31,15 +32,22 @@ func appendifuniq(slice []string, s string) []string {
 
 func (h *HaProxy) Loadenv(cfg string) {
 	h.Cfg = cfg
-	//Load sock and pid to HaProxy struct
+	//Load socket and pid to HaProxy struct
 	repf := regexp.MustCompile(`pidfile`)
 	reso := regexp.MustCompile(`stats\ socket`)
 
-	c, _ := ioutil.ReadFile(cfg)
+	c, err := ioutil.ReadFile(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	
 	cn := strings.Split(string(c), "\n")
 	for _, line := range cn {
 		if repf.MatchString(line) {
-			p, _ := ioutil.ReadFile(strings.Fields(line)[1])
+			p, err := ioutil.ReadFile(strings.Fields(line)[1])
+			if err != nil {
+				log.Fatal(err)
+			}
 			q := strings.Split(string(p), "\n")
 			for _, l := range q[0:len(q)-1] {
 				h.Pid = appendifuniq(h.Pid, string(l))

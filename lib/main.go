@@ -62,22 +62,6 @@ func (h *HaProxy) Loadenv(cfg string) {
 	}
 }
 
-func (h *HaProxy) Showstatus() string {
-	if len(h.Pid) > 0 {
-	var status string
-		for _, p := range h.Pid {
-			head := fmt.Sprintf("haproxy is running on pid %s.\nthese ports are used and guys are connected:\n", p)
-			shell := fmt.Sprintf("lsof -ln -i |awk '$2 ~ /%s/ {print $8\" \"$9}'", p)
-			cmd := exec.Command("sh", "-c", shell)
-			res, _ := cmd.CombinedOutput()
-			status += head + string(res)
-		}
-		return status
-	} else {
-		return "haproxy is not running"
-	}
-}
-
 func (h *HaProxy) Exec(command string) []string {
 	var result []string
 	for _, socket := range h.Sock {
@@ -100,6 +84,22 @@ func (h *HaProxy) Exec(command string) []string {
 		result = append(result, string(res))
 	}
 	return result
+}
+
+func (h *HaProxy) Showstatus() string {
+        if len(h.Pid) > 0 {
+        var status string
+                for _, p := range h.Pid {
+                        head := fmt.Sprintf("haproxy is running on pid %s.\nthese ports are used and guys are connected:\n", p)
+                        shell := fmt.Sprintf("lsof -ln -i |awk '$2 ~ /%s/ {print $8\" \"$9}'", p)
+                        cmd := exec.Command("sh", "-c", shell)
+                        res, _ := cmd.CombinedOutput()
+                        status += head + string(res)
+                }
+                return status
+        } else {
+                return "haproxy is not running"
+        }
 }
 
 func (h *HaProxy) Showhealth() string {

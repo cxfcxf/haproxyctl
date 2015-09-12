@@ -3,18 +3,18 @@ package main
 import (
 	"flag"
 	"fmt"
-	"strings"
-	"net/http"
 	haproxyctl "github.com/cxfcxf/haproxyctl/lib"
+	"net/http"
+	"strings"
 )
 
 var (
-	configcheck  = flag.Bool("configcheck", false, "check config file")
-	action	     = flag.String("action", "", "tell me what action you wanna do?")
-	execution    = flag.String("execution", "", "parameters to action")
-	binding      = flag.String("binding", "", "http port you want program to bind to")
-	client	     = flag.String("client", "", "only one client ip are allowed")
-	f            = flag.String("f", "/etc/haproxy/haproxy.cfg", "point configration file, default /etc/haproxy/haproxy.cfg")
+	configcheck = flag.Bool("configcheck", false, "check config file")
+	action      = flag.String("action", "", "tell me what action you wanna do?")
+	execution   = flag.String("execution", "", "parameters to action")
+	binding     = flag.String("binding", "", "http port you want program to bind to")
+	client      = flag.String("client", "", "only one client ip are allowed")
+	f           = flag.String("f", "/etc/haproxy/haproxy.cfg", "point configration file, default /etc/haproxy/haproxy.cfg")
 )
 
 func handler(w http.ResponseWriter, r *http.Request, h *haproxyctl.HaProxy, c string) {
@@ -25,7 +25,9 @@ func handler(w http.ResponseWriter, r *http.Request, h *haproxyctl.HaProxy, c st
 		fmt.Fprintf(w, usage)
 	} else {
 		err := r.ParseForm()
-		if err != nil { panic(err) }
+		if err != nil {
+			panic(err)
+		}
 		uri := r.Form
 		if uri.Get("action") == "" {
 			fmt.Fprintf(w, "you need to specify action")
@@ -38,7 +40,7 @@ func handler(w http.ResponseWriter, r *http.Request, h *haproxyctl.HaProxy, c st
 			case "socketexec":
 				res := h.Exec(execution)
 				for _, r := range res {
-                                	fmt.Fprintf(w, r)
+					fmt.Fprintf(w, r)
 				}
 			case "showhealth":
 				res := h.Showhealth()
@@ -50,7 +52,7 @@ func handler(w http.ResponseWriter, r *http.Request, h *haproxyctl.HaProxy, c st
 				res := h.ShowRegexp(execution)
 				fmt.Fprintf(w, res)
 			case "enable":
-				en := strings.Split(execution, "/")	
+				en := strings.Split(execution, "/")
 				res := h.EnableServer(en[0], en[1])
 				fmt.Fprintf(w, res)
 			case "enableall":
@@ -92,32 +94,32 @@ func main() {
 	if len(*action) > 0 {
 		switch *action {
 		case "socketexec":
-                	res := haproxy.Exec(*execution)
+			res := haproxy.Exec(*execution)
 			for _, r := range res {
-                		fmt.Print(r)
+				fmt.Print(r)
 			}
 		case "showstatus":
-                	res := haproxy.Showstatus()
-                	fmt.Print(res)
+			res := haproxy.Showstatus()
+			fmt.Print(res)
 		case "showbackend":
 			res := haproxy.ShowRegexp("BACKEND")
-                	fmt.Print(res)
+			fmt.Print(res)
 		case "showhealth":
-                	res := haproxy.Showhealth()
-                	fmt.Print(res)
+			res := haproxy.Showhealth()
+			fmt.Print(res)
 		case "showregexp":
 			res := haproxy.ShowRegexp(*execution)
 			fmt.Print(res)
 		case "enable":
-                	en := strings.Split(*execution, "/")
-                	res := haproxy.EnableServer(en[0], en[1])
-                	fmt.Printf(res)
+			en := strings.Split(*execution, "/")
+			res := haproxy.EnableServer(en[0], en[1])
+			fmt.Printf(res)
 		case "enableall":
 			haproxy.EnableAll(*execution)
 		case "disable":
-                	dis := strings.Split(*execution, "/")
-                	res := haproxy.DisableServer(dis[0], dis[1])
-                	fmt.Printf(res)
+			dis := strings.Split(*execution, "/")
+			res := haproxy.DisableServer(dis[0], dis[1])
+			fmt.Printf(res)
 		case "disableall":
 			haproxy.DisableAll(*execution)
 		default:

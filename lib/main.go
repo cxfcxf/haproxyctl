@@ -3,11 +3,11 @@ package haproxyctl
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"os/exec"
 	"regexp"
 	"strings"
-	"log"
 )
 
 const (
@@ -22,12 +22,12 @@ type HaProxy struct {
 }
 
 func appendifuniq(slice []string, s string) []string {
-    for _, ele := range slice {
-        if ele == s {
-            return slice
-        }
-    }
-    return append(slice, s)
+	for _, ele := range slice {
+		if ele == s {
+			return slice
+		}
+	}
+	return append(slice, s)
 }
 
 func (h *HaProxy) Loadenv(cfg string) {
@@ -40,16 +40,16 @@ func (h *HaProxy) Loadenv(cfg string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	cn := strings.Split(string(c), "\n")
 	for _, line := range cn {
 		if repf.MatchString(line) {
 			p, err := ioutil.ReadFile(strings.Fields(line)[1])
 			if err != nil {
-				log.Fatal(err + "please make sure haproxy is started\n")
+				log.Fatal(err.Error() + "please make sure haproxy is started\n")
 			}
 			q := strings.Split(string(p), "\n")
-			for _, l := range q[0:len(q)-1] {
+			for _, l := range q[0 : len(q)-1] {
 				h.Pid = appendifuniq(h.Pid, string(l))
 			}
 		}
@@ -73,41 +73,41 @@ func (h *HaProxy) Loadenv(cfg string) {
 func (h *HaProxy) Exec(command string) []string {
 	var result []string
 	for _, socket := range h.Sock {
-        	sock, err := net.Dial(SOCKET_TYPE, socket)
-        	if err != nil {
-                	panic(err)
-        	}
-        	defer sock.Close()
+		sock, err := net.Dial(SOCKET_TYPE, socket)
+		if err != nil {
+			panic(err)
+		}
+		defer sock.Close()
 
-        	cmd := fmt.Sprintf("%s\r\n", command)
-        	_, err = sock.Write([]byte(cmd))
-        	if err != nil {
-                	panic(err)
-        	}
+		cmd := fmt.Sprintf("%s\r\n", command)
+		_, err = sock.Write([]byte(cmd))
+		if err != nil {
+			panic(err)
+		}
 
-        	res, err := ioutil.ReadAll(sock)
-        	if err != nil {
-                	panic(err)
-        	}
+		res, err := ioutil.ReadAll(sock)
+		if err != nil {
+			panic(err)
+		}
 		result = append(result, string(res))
 	}
 	return result
 }
 
 func (h *HaProxy) Showstatus() string {
-        if len(h.Pid) > 0 {
-        var status string
-                for _, p := range h.Pid {
-                        head := fmt.Sprintf("haproxy is running on pid %s.\nthese ports are used and guys are connected:\n", p)
-                        shell := fmt.Sprintf("lsof -ln -i |awk '$2 ~ /%s/ {print $8\" \"$9}'", p)
-                        cmd := exec.Command("sh", "-c", shell)
-                        res, _ := cmd.CombinedOutput()
-                        status += head + string(res)
-                }
-                return status
-        } else {
-                return "haproxy is not running"
-        }
+	if len(h.Pid) > 0 {
+		var status string
+		for _, p := range h.Pid {
+			head := fmt.Sprintf("haproxy is running on pid %s.\nthese ports are used and guys are connected:\n", p)
+			shell := fmt.Sprintf("lsof -ln -i |awk '$2 ~ /%s/ {print $8\" \"$9}'", p)
+			cmd := exec.Command("sh", "-c", shell)
+			res, _ := cmd.CombinedOutput()
+			status += head + string(res)
+		}
+		return status
+	} else {
+		return "haproxy is not running"
+	}
 }
 
 func (h *HaProxy) Showhealth() string {
